@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa-1.1.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <context:annotation-config/>
+    <aop:aspectj-autoproxy/>
+    <tx:annotation-driven/>
+
+    <util:properties id="jpaProperties">
+        <prop key="hibernate.id.new_generator_mappings">true</prop>
+        <prop key="hibernate.cache.use_second_level_cache">false</prop>
+        <prop key="hibernate.dialect">org.hibernate.dialect.Oracle10gDialect</prop>
+        <prop key="hibernate.jdbc.batch_size">3</prop>
+        <prop key="hibernate.jdbc.batch_versioned_data">true</prop>
+        <prop key="hibernate.hbm2ddl.auto">create</prop>
+        <prop key="hibernate.show_sql">false</prop>
+        <prop key="hibernate.debug">false</prop>
+    </util:properties>
+
+    <jpa:repositories entity-manager-factory-ref="entityManagerFactory" base-package="org.springframework.data.jpa.example.repository"/>
+
+	<bean id="database" class="org.apache.commons.dbcp.ManagedBasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="org.h2.Driver" />
+        <property name="url" value="jdbc:h2:target/h2/cardArt;MODE=Oracle;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE;MULTI_THREADED=3" />
+        <property name="username" value="sa"/>
+        <property name="password" value="" />
+        <property name="defaultAutoCommit" value="false" />
+    </bean>
+
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+        <qualifier value="sampleapplication"/>
+        <constructor-arg ref="database"/>
+    </bean>
+
+    <bean id="entityManagerFactory"
+          class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="persistenceUnitName" value="SAMPLE_APPLICATION" />
+        <property name="dataSource" ref="dataSource" />
+        <property name="jpaPropertyMap" ref="jpaProperties" />
+        <property name="persistenceXmlLocation" value="classpath:/META-INF/spring/persistence.xml" />
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <qualifier value="transactionManager"/>
+        <property name="entityManagerFactory" ref="entityManagerFactory" />
+    </bean>
+    
+    <tx:annotation-driven mode="aspectj" transaction-manager="transactionManager"/>
+    
+    <context:spring-configured/>
+</beans>
